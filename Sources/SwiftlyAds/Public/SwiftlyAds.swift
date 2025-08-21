@@ -60,7 +60,10 @@ public final class SwiftlyAds: NSObject, @unchecked Sendable {
 public extension SwiftlyAds {
     @discardableResult
     func initializeIfNeeded(from viewController: UIViewController) async -> SwiftlyAdLoadPresentation {
-        guard !hasInitializedMobileAds else { return adLoadPresentation }
+        guard !hasInitializedMobileAds else {
+            doWork(after: 0.1) { self.adLoadPresentation.onSuccess?() }
+            return adLoadPresentation
+        }
         do {
             if let consentManager { try await consentManager.request(from: viewController) }
             _ = await mobileAds.start()
