@@ -14,6 +14,7 @@ struct SwiftlyAdsConfigurationProvider: @unchecked Sendable {
     let nativeAdUnitId: String?
     let isTaggedForChildDirectedTreatment: Bool?
     let isTaggedForUnderAgeOfConsent: Bool?
+    let isPreLoadAds: Bool?
     let mediationConfigurator: SwiftlyAdsMediationConfigurator?
     let testDeviceIdentifiers: [String]
     let geography: SwiftlyDebugGeography

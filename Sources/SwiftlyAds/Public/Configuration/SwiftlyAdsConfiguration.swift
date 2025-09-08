@@ -14,6 +14,7 @@ public class SwiftlyAdsConfiguration {
     fileprivate var nativeAdUnitId: String?
     fileprivate var isTaggedForChildDirectedTreatment: Bool?
     fileprivate var isTaggedForUnderAgeOfConsent: Bool?
+    fileprivate var isPreLoadAds: Bool?
     fileprivate var mediationConfigurator: SwiftlyAdsMediationConfigurator?
     fileprivate var testDeviceIdentifiers: [String]?
     fileprivate var geography: SwiftlyDebugGeography?
@@ -66,6 +67,11 @@ public extension SwiftlyAdsConfiguration {
     @discardableResult
     func isTaggedForUnderAgeOfConsent(_ bool: Bool?) -> SwiftlyAdsConfiguration {
         self.isTaggedForUnderAgeOfConsent = bool
+        return self
+    }
+    @discardableResult
+    func isPreLoadAds(_ bool: Bool) -> SwiftlyAdsConfiguration {
+        self.isPreLoadAds = bool
         return self
     }
     @discardableResult
@@ -126,6 +132,7 @@ extension SwiftlyAdsConfiguration {
             nativeAdUnitId: nativeAdUnitId,
             isTaggedForChildDirectedTreatment: isTaggedForChildDirectedTreatment,
             isTaggedForUnderAgeOfConsent: isTaggedForUnderAgeOfConsent,
+            isPreLoadAds: isPreLoadAds ?? false,
             mediationConfigurator: mediationConfigurator,
             testDeviceIdentifiers: testDeviceIdentifiers ?? [],
             geography: geography ?? .EEA,

@@ -15,6 +15,7 @@ final class NativeAdManager: NSObject, @unchecked Sendable {
     private var adLoader: AdLoader?
     private var preLoadedAds: [NativeAd] = []
     private var adLimit: Int = 1
+    private var isPreloadAds: Bool = false
     
     // MARK: - Init
     init(adUnitId: String, adRequest: SwiftlyAdRequest, activePresentation: SwiftlyNativeAd) {
@@ -36,8 +37,9 @@ extension NativeAdManager {
         adLoader = nil
         preLoadedAds.removeAll()
     }
-    func getNextAd() -> NativeAd? {
-        if let ad = preLoadedAds.last { return ad }
+    func getNextAd(isPreloadAds: Bool) -> NativeAd? {
+        self.isPreloadAds = isPreloadAds
+        if isPreloadAds, let ad = preLoadedAds.last { return ad }
         else { loadAd() }
         return nil
     }
@@ -45,8 +47,12 @@ extension NativeAdManager {
 
 // MARK: - Delegate
 extension NativeAdManager: NativeAdLoaderDelegate {
+    func adLoaderDidFinishLoading(_ adLoader: AdLoader) {
+        activePresentation.onAdLoaded?()
+    }
     func adLoader(_ adLoader: AdLoader, didReceive nativeAd: NativeAd) {
-        cache(nativeAd)
+        if isPreloadAds { cache(nativeAd) }
+        else { activePresentation.onReciveAd?(nativeAd) }
     }
     func adLoader(_ adLoader: AdLoader, didFailToReceiveAdWithError error: Error) {
         activePresentation.onError?(error)

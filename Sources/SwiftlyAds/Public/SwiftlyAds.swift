@@ -68,7 +68,7 @@ public extension SwiftlyAds {
             if let consentManager { try await consentManager.request(from: viewController) }
             _ = await mobileAds.start()
             hasInitializedMobileAds = true
-            try await loadAds()
+            if self.configuration?.isPreLoadAds ?? false { try await loadAds() }
             doWork(after: 0.1) { self.adLoadPresentation.onSuccess?() }
         } catch {
             doWork(after: 0.1) { self.adLoadPresentation.onError?(error) }
@@ -110,11 +110,11 @@ public extension SwiftlyAds {
         let currentConfig = getCurrentConfiguration()
         let newConfig = updates(currentConfig)
         configure(newConfig)
-        Task { try? await loadAds() }
+        if self.configuration?.isPreLoadAds ?? false { Task { try? await loadAds() } }
     }
     @MainActor
     @discardableResult
-    func showInterstitialAd(from viewController: UIViewController) -> SwiftlyInterAd {
+    func showInterstitialAd(from viewController: UIViewController, skipCount: Bool = false) -> SwiftlyInterAd {
         guard !isDisabled else {
             doWork(after: 0.1) { self.swiftlyInterAd.onClose?() }
             return swiftlyInterAd
@@ -123,22 +123,32 @@ public extension SwiftlyAds {
             doWork(after: 0.1) { self.swiftlyInterAd.onError?(SwiftlyAdError.interStrialAdUnitIdNotSet) }
             return swiftlyInterAd
         }
-        guard interAdCounter % (configuration?.interAdShowCount ?? 1) == 0 else {
-            interAdCounter += 1
-            doWork(after: 0.1) { self.swiftlyInterAd.onClose?() }
-            return swiftlyInterAd
+        if !skipCount {
+            guard interAdCounter % (configuration?.interAdShowCount ?? 1) == 0 else {
+                interAdCounter += 1
+                doWork(after: 0.1) { self.swiftlyInterAd.onClose?() }
+                return swiftlyInterAd
+            }
         }
         guard hasConsent else {
             doWork(after: 0.1) { self.swiftlyInterAd.onError?(SwiftlyAdError.consentNotObtained) }
             return swiftlyInterAd
         }
-        interAdCounter += 1
-        interstraitlAd.show(from: viewController)
+        if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
+            Task {
+                try await interstraitlAd.loadAd()
+                interstraitlAd.show(from: viewController)
+                if !skipCount { interAdCounter += 1 }
+            }
+        } else {
+            interstraitlAd.show(from: viewController)
+            if !skipCount { interAdCounter += 1 }
+        }
         return swiftlyInterAd
     }
     @MainActor
     @discardableResult
-    func showAppOpenAd(from viewController: UIViewController) -> SwiftlyAppOpenAd {
+    func showAppOpenAd(from viewController: UIViewController, skipCount: Bool = false) -> SwiftlyAppOpenAd {
         guard !isDisabled else {
             doWork(after: 0.1) { self.swiftlyAppOpenAd.onClose?() }
             return swiftlyAppOpenAd
@@ -147,17 +157,27 @@ public extension SwiftlyAds {
             doWork(after: 0.1) { self.swiftlyAppOpenAd.onError?(SwiftlyAdError.appOpenAdUnitIdNotSet) }
             return swiftlyAppOpenAd
         }
-        guard appOpenAdCounter % (configuration?.appOpenAdShowCount ?? 1) == 0 else {
-            appOpenAdCounter += 1
-            doWork(after: 0.1) { self.swiftlyAppOpenAd.onClose?() }
-            return swiftlyAppOpenAd
+        if !skipCount {
+            guard appOpenAdCounter % (configuration?.appOpenAdShowCount ?? 1) == 0 else {
+                appOpenAdCounter += 1
+                doWork(after: 0.1) { self.swiftlyAppOpenAd.onClose?() }
+                return swiftlyAppOpenAd
+            }
         }
         guard hasConsent else {
             doWork(after: 0.1) { self.swiftlyAppOpenAd.onError?(SwiftlyAdError.consentNotObtained) }
             return swiftlyAppOpenAd
         }
-        appOpenAd.show(from: viewController)
-        appOpenAdCounter += 1
+        if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
+            Task {
+                try await appOpenAd.loadAd()
+                appOpenAd.show(from: viewController)
+                if !skipCount { appOpenAdCounter += 1 }
+            }
+        } else {
+            appOpenAd.show(from: viewController)
+            if !skipCount { appOpenAdCounter += 1 }
+        }
         return swiftlyAppOpenAd
     }
     @MainActor
@@ -175,7 +195,14 @@ public extension SwiftlyAds {
             doWork(after: 0.1) { self.swiftlyRewardAd.onError?(SwiftlyAdError.consentNotObtained) }
             return swiftlyRewardAd
         }
-        rewardAd.show(from: viewController)
+        if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
+            Task {
+                try await rewardAd.loadAd()
+                rewardAd.show(from: viewController)
+            }
+        } else {
+            rewardAd.show(from: viewController)
+        }
         return swiftlyRewardAd
     }
     @MainActor
@@ -193,11 +220,18 @@ public extension SwiftlyAds {
             doWork(after: 0.1) { self.swiftlyRewardInterAd.onError?(SwiftlyAdError.consentNotObtained) }
             return swiftlyRewardInterAd
         }
-        rewardInterAd.show(from: viewController)
+        if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
+            Task {
+                try await rewardInterAd.loadAd()
+                rewardInterAd.show(from: viewController)
+            }
+        } else {
+            rewardInterAd.show(from: viewController)
+        }
         return swiftlyRewardInterAd
     }
     @discardableResult
-    func getNativeAd() -> SwiftlyNativeAd {
+    func getNativeAd(skipCount: Bool = false) -> SwiftlyNativeAd {
         guard !isDisabled else {
             doWork(after: 0.1) { self.swiftlyNativeAd.onReciveAd?(nil) }
             return swiftlyNativeAd
@@ -206,19 +240,21 @@ public extension SwiftlyAds {
             doWork(after: 0.1) { self.swiftlyNativeAd.onError?(SwiftlyAdError.nativeAdUnitIdNotSet) }
             return swiftlyNativeAd
         }
-        guard nativeAdCounter % (configuration?.nativeAdShowCount ?? 1) == 0 else {
-            nativeAdCounter += 1
-            doWork(after: 0.1) { self.swiftlyNativeAd.onReciveAd?(nil) }
-            return swiftlyNativeAd
+        if !skipCount {
+            guard nativeAdCounter % (configuration?.nativeAdShowCount ?? 1) == 0 else {
+                nativeAdCounter += 1
+                doWork(after: 0.1) { self.swiftlyNativeAd.onReciveAd?(nil) }
+                return swiftlyNativeAd
+            }
         }
         guard hasConsent else {
             doWork(after: 0.1) { self.swiftlyNativeAd.onError?(SwiftlyAdError.consentNotObtained) }
             return swiftlyNativeAd
         }
         doWork(after: 0.1) {
-            self.swiftlyNativeAd.onReciveAd?(nativeAd.getNextAd())
-            self.nativeAdCounter += 1
-            nativeAd.loadAd()
+            self.swiftlyNativeAd.onReciveAd?(nativeAd.getNextAd(isPreloadAds: self.configuration?.isPreLoadAds ?? false))
+            if !skipCount { self.nativeAdCounter += 1 }
+            if self.configuration?.isPreLoadAds ?? false { nativeAd.loadAd() }
         }
         return swiftlyNativeAd
     }
@@ -271,6 +307,7 @@ extension SwiftlyAds {
                 .nativeAdUnitId(currentConfig.nativeAdUnitId)
                 .isTaggedForChildDirectedTreatment(currentConfig.isTaggedForChildDirectedTreatment)
                 .isTaggedForUnderAgeOfConsent(currentConfig.isTaggedForUnderAgeOfConsent)
+                .isPreLoadAds(currentConfig.isPreLoadAds ?? false)
                 .mediationConfigurator(currentConfig.mediationConfigurator)
                 .testDeviceIdentifiers(currentConfig.testDeviceIdentifiers)
                 .geography(currentConfig.geography)

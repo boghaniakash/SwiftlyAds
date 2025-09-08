@@ -7,11 +7,17 @@
 
 public final class SwiftlyNativeAd: @unchecked Sendable {
     var onReciveAd: ((SwiftlyNativeAds?) -> Void)?
+    var onAdLoaded: (() -> Void)?
     var onError: ((Error) -> Void)?
     
     @discardableResult
     public func onReciveAd(_ handler: @escaping (SwiftlyNativeAds?) -> Void) -> Self {
         onReciveAd = handler
+        return self
+    }
+    @discardableResult
+    public func onAdLoaded(_ handler: @escaping () -> Void) -> Self {
+        onAdLoaded = handler
         return self
     }
     @discardableResult
