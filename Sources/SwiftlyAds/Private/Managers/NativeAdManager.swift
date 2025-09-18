@@ -27,7 +27,8 @@ final class NativeAdManager: NSObject, @unchecked Sendable {
 
 extension NativeAdManager {
     var isReady: Bool { !preLoadedAds.isEmpty }
-    func loadAd() {
+    func loadAd(isPreloadAds: Bool) {
+        self.isPreloadAds = isPreloadAds
         adLoader = AdLoader(adUnitID: adUnitId, rootViewController: nil, adTypes: [.native], options: nil)
         adLoader?.delegate = self
         adLoader?.load(adRequest)
@@ -37,10 +38,9 @@ extension NativeAdManager {
         adLoader = nil
         preLoadedAds.removeAll()
     }
-    func getNextAd(isPreloadAds: Bool) -> NativeAd? {
-        self.isPreloadAds = isPreloadAds
+    func getNextAd() -> NativeAd? {
         if isPreloadAds, let ad = preLoadedAds.last { return ad }
-        else { loadAd() }
+        else { loadAd(isPreloadAds: isPreloadAds) }
         return nil
     }
 }

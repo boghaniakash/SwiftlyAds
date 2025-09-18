@@ -252,9 +252,9 @@ public extension SwiftlyAds {
             return swiftlyNativeAd
         }
         doWork(after: 0.1) {
-            self.swiftlyNativeAd.onReciveAd?(nativeAd.getNextAd(isPreloadAds: self.configuration?.isPreLoadAds ?? false))
+            self.swiftlyNativeAd.onReciveAd?(nativeAd.getNextAd())
             if !skipCount { self.nativeAdCounter += 1 }
-            if self.configuration?.isPreLoadAds ?? false { nativeAd.loadAd() }
+            if self.configuration?.isPreLoadAds ?? false { nativeAd.loadAd(isPreloadAds: self.configuration?.isPreLoadAds ?? false) }
         }
         return swiftlyNativeAd
     }
@@ -322,7 +322,7 @@ extension SwiftlyAds {
     }
     func loadAds() async throws {
         guard !disabled else { return }
-        if let nativeAd, !nativeAd.isReady { nativeAd.loadAd() }
+        if let nativeAd, !nativeAd.isReady { nativeAd.loadAd(isPreloadAds: self.configuration?.isPreLoadAds ?? false) }
         if let rewardAd, !rewardAd.isReady { try await rewardAd.loadAd() }
         if let interstitialAd, !interstitialAd.isReady { try await interstitialAd.loadAd() }
         if let rewardInterAd, !rewardInterAd.isReady { try await rewardInterAd.loadAd() }
