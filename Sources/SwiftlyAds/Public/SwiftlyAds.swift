@@ -59,13 +59,13 @@ public final class SwiftlyAds: NSObject, @unchecked Sendable {
 // MARK: - Public + Extentions
 public extension SwiftlyAds {
     @discardableResult
-    func initializeIfNeeded(from viewController: UIViewController) async -> SwiftlyAdLoadPresentation {
+    func initializeIfNeeded(from viewController: UIViewController, showConsent: Bool = true) async -> SwiftlyAdLoadPresentation {
         guard !hasInitializedMobileAds else {
             doWork(after: 0.1) { self.adLoadPresentation.onSuccess?() }
             return adLoadPresentation
         }
         do {
-            if let consentManager { try await consentManager.request(from: viewController) }
+            if showConsent, let consentManager { try await consentManager.request(from: viewController) }
             _ = await mobileAds.start()
             hasInitializedMobileAds = true
             if self.configuration?.isPreLoadAds ?? false { try await loadAds() }
@@ -263,7 +263,6 @@ public extension SwiftlyAds {
         guard !isDisabled else { return nil }
         guard let unitId = configuration?.bannerAdUnitId else { return nil }
         guard hasConsent else { return nil }
-        let request = self.configuration?.adRequest ?? SwiftlyAdRequest()
         return SwiftlyBannerAdView(adUnitID: unitId, isCollapsible: isCollapsible, adFormate: adFormate, onShow: onShow)
     }
     func updateConsent(from viewController: UIViewController) async throws -> ConsentStatus {
