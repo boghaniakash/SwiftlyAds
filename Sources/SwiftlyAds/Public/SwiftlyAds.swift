@@ -39,13 +39,18 @@ public final class SwiftlyAds: NSObject, @unchecked Sendable {
     private var interAdCounter: Int = 0
     private var appOpenAdCounter: Int = 0
     private var nativeAdCounter: Int = 0
+    private var showConsent: Bool = false
     
     private var hasConsent: Bool {
-        switch consentStatus {
-        case .notRequired, .obtained:
+        if showConsent {
+            switch consentStatus {
+            case .notRequired, .obtained:
+                return true
+            default:
+                return false
+            }
+        } else {
             return true
-        default:
-            return false
         }
     }
     
@@ -65,6 +70,7 @@ public extension SwiftlyAds {
             return adLoadPresentation
         }
         do {
+            self.showConsent = showConsent
             if showConsent, let consentManager { try await consentManager.request(from: viewController) }
             _ = await mobileAds.start()
             hasInitializedMobileAds = true
