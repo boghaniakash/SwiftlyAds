@@ -142,9 +142,13 @@ public extension SwiftlyAds {
         }
         if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
             Task {
-                try await interstraitlAd.loadAd()
-                interstraitlAd.show(from: viewController)
-                if !skipCount { interAdCounter += 1 }
+                do {
+                    try await interstraitlAd.loadAd()
+                    interstraitlAd.show(from: viewController)
+                    if !skipCount { interAdCounter += 1 }
+                } catch {
+                    doWork(after: 0.1) { self.swiftlyInterAd.onError?(error) }
+                }
             }
         } else {
             interstraitlAd.show(from: viewController)
@@ -176,9 +180,13 @@ public extension SwiftlyAds {
         }
         if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
             Task {
-                try await appOpenAd.loadAd()
-                appOpenAd.show(from: viewController)
-                if !skipCount { appOpenAdCounter += 1 }
+                do {
+                    try await appOpenAd.loadAd()
+                    appOpenAd.show(from: viewController)
+                    if !skipCount { appOpenAdCounter += 1 }
+                } catch {
+                    doWork(after: 0.1) { self.swiftlyAppOpenAd.onError?(error) }
+                }
             }
         } else {
             appOpenAd.show(from: viewController)
@@ -203,8 +211,12 @@ public extension SwiftlyAds {
         }
         if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
             Task {
-                try await rewardAd.loadAd()
-                rewardAd.show(from: viewController)
+                do {
+                    try await rewardAd.loadAd()
+                    rewardAd.show(from: viewController)
+                } catch {
+                    doWork(after: 0.1) { self.swiftlyRewardAd.onError?(error) }
+                }
             }
         } else {
             rewardAd.show(from: viewController)
@@ -228,8 +240,12 @@ public extension SwiftlyAds {
         }
         if let isPreload = self.configuration?.isPreLoadAds, !isPreload {
             Task {
-                try await rewardInterAd.loadAd()
-                rewardInterAd.show(from: viewController)
+                do {
+                    try await rewardInterAd.loadAd()
+                    rewardInterAd.show(from: viewController)
+                } catch {
+                    doWork(after: 0.1) { self.swiftlyRewardInterAd.onError?(error) }
+                }
             }
         } else {
             rewardInterAd.show(from: viewController)
